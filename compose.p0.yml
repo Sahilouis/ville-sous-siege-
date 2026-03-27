@@ -1,0 +1,67 @@
+networks:
+  ville-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.0.0/24
+
+services:
+
+  kali-lite:
+    image: kalilinux/kali-rolling
+    container_name: kali-lite
+    hostname: kali-lite
+    networks:
+      ville-net:
+        ipv4_address: 10.10.0.10
+    command: >
+      bash -c "
+        apt-get update -qq &&
+        apt-get install -y -q curl nmap dnsutils iputils-ping net-tools &&
+        echo '✅ kali-lite prêt' &&
+        sleep infinity
+      "
+    restart: unless-stopped
+
+  dvwa:
+    image: vulnerables/web-dvwa
+    container_name: dvwa
+    hostname: dvwa
+    networks:
+      ville-net:
+        ipv4_address: 10.10.0.20
+    ports:
+      - "8080:80"
+    depends_on:
+      - dvwa-db
+    restart: unless-stopped
+
+  dvwa-db:
+    image: mysql:8.0
+    container_name: dvwa-db
+    hostname: dvwa-db
+    networks:
+      ville-net:
+        ipv4_address: 10.10.0.21
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=dvwa
+      - MYSQL_USER=dvwa
+      - MYSQL_PASSWORD=p@ssw0rd
+    volumes:
+      - dvwa-db-data:/var/lib/mysql
+    restart: unless-stopped
+
+  echo-server:
+    image: ealen/echo-server
+    container_name: echo-server
+    hostname: echo-server
+    networks:
+      ville-net:
+        ipv4_address: 10.10.0.30
+    ports:
+      - "8888:80"
+    restart: unless-stopped
+
+volumes:
+  dvwa-db-data:
