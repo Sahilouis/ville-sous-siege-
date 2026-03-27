@@ -1,0 +1,30 @@
+{
+  "name": "La Ville Sans Protection",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "dockerDashComposeVersion": "v2"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "redhat.vscode-yaml"
+      ]
+    }
+  },
+
+  "postStartCommand": "docker compose -f compose.p0.yml up -d && echo '✅ Ville P0 démarrée'",
+
+  "forwardPorts": [8080, 8888],
+  "portsAttributes": {
+    "8080": { "label": "DVWA" },
+    "8888": { "label": "Echo Server" }
+  },
+
+  "remoteUser": "vscode"
+}
