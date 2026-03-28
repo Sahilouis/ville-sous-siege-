@@ -16,6 +16,16 @@ services:
       - dmz
     restart: unless-stopped
 
+  mtls-server:
+    image: nginx:alpine
+    container_name: mtls-server
+    volumes:
+      - mtls-certs:/etc/nginx/certs
+      - ./nginx-mtls.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - lan
+    restart: unless-stopped
+
   mtls-client:
     image: alpine/curl
     container_name: mtls-client
@@ -26,3 +36,4 @@ services:
 
 volumes:
   step-ca-data:
+  mtls-certs:
