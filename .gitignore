@@ -1,0 +1,4 @@
+*.crt
+*.key
+*.tar.gz
+step_linux_amd64/
