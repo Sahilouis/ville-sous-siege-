@@ -1,0 +1,17 @@
+include:
+  - compose.p1.yml
+
+services:
+
+  nftables-fw:
+    image: alpine:3.19
+    container_name: nftables-fw
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    command: sleep infinity
+    networks:
+      - dmz
+      - lan
+      - attacker
+    restart: unless-stopped
