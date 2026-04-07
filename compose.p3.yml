@@ -1,0 +1,16 @@
+include:
+  - compose.p2.yml
+
+services:
+
+  nginx-waf:
+    image: owasp/modsecurity-crs:nginx
+    container_name: nginx-waf
+    environment:
+      - BACKEND=http://dvwa:80
+      - PORT=8080
+      - MODSEC_RULE_ENGINE=On
+    networks:
+      - dmz
+      - lan
+    restart: unless-stopped
