@@ -10,6 +10,8 @@ services:
       - BACKEND=http://dvwa:80
       - PORT=8080
       - MODSEC_RULE_ENGINE=On
+    volumes:
+      - ./modsec-excludes.conf:/etc/modsecurity.d/owasp-crs/rules/EXCLUDES.conf
     networks:
       - dmz
       - lan
