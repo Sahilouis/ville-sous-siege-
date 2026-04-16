@@ -1,0 +1,132 @@
+networks:
+  dmz:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+  lan:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24
+  monitoring:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/24
+  attacker:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.23.0.0/24
+
+volumes:
+  step-ca-data:
+  mtls-certs:
+  dvwa-db-data:
+
+services:
+
+  dvwa:
+    image: vulnerables/web-dvwa
+    container_name: dvwa
+    networks:
+      - lan
+    restart: unless-stopped
+
+  dvwa-db:
+    image: mysql:8.0
+    container_name: dvwa-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=dvwa
+      - MYSQL_USER=dvwa
+      - MYSQL_PASSWORD=p@ssw0rd
+    volumes:
+      - dvwa-db-data:/var/lib/mysql
+    networks:
+      - lan
+    restart: unless-stopped
+
+  echo-server:
+    image: ealen/echo-server
+    container_name: echo-server
+    networks:
+      - lan
+    restart: unless-stopped
+
+  kali-lite:
+    image: kalilinux/kali-rolling
+    container_name: kali-lite
+    privileged: true
+    command: sh /fw-init.sh
+    volumes:
+      - ./fw-init.sh:/fw-init.sh:ro
+    networks:
+      - attacker
+      - dmz
+    restart: unless-stopped
+
+  step-ca:
+    image: smallstep/step-ca
+    container_name: step-ca
+    environment:
+      - DOCKER_STEPCA_INIT_NAME=VilleSousSiege
+      - DOCKER_STEPCA_INIT_DNS_NAMES=step-ca
+      - DOCKER_STEPCA_INIT_REMOTE_MANAGEMENT=true
+      - DOCKER_STEPCA_INIT_PASSWORD=VilleSousSiege2024!
+    volumes:
+      - step-ca-data:/home/step
+    networks:
+      - lan
+    restart: unless-stopped
+
+  mtls-server:
+    image: nginx:alpine
+    container_name: mtls-server
+    volumes:
+      - mtls-certs:/etc/nginx/certs
+      - ./nginx-mtls.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - lan
+    restart: unless-stopped
+
+  mtls-client:
+    image: alpine/curl
+    container_name: mtls-client
+    command: sh /fw-init.sh
+    volumes:
+      - ./fw-init.sh:/fw-init.sh:ro
+    networks:
+      - lan
+    restart: unless-stopped
+
+  nftables-fw:
+    image: alpine:3.19
+    container_name: nftables-fw
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    command: sh /fw-init.sh
+    volumes:
+      - ./fw-init.sh:/fw-init.sh:ro
+    networks:
+      - attacker
+      - dmz
+      - lan
+    restart: unless-stopped
+
+  nginx-waf:
+    image: owasp/modsecurity-crs:nginx
+    container_name: nginx-waf
+    environment:
+      - BACKEND=http://dvwa:80
+      - PORT=8080
+      - MODSEC_RULE_ENGINE=On
+    volumes:
+      - ./modsec-excludes.conf:/etc/modsecurity.d/owasp-crs/rules/EXCLUDES.conf
+    networks:
+      - dmz
+      - lan
+    restart: unless-stopped
