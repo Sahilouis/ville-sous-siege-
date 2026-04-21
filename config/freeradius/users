@@ -1,0 +1,13 @@
+alice   Cleartext-Password := "alice2024!"
+        Service-Type = Framed-User,
+        Framed-Protocol = PPP
+
+bob     Cleartext-Password := "bob2024!"
+        Service-Type = Framed-User,
+        Framed-Protocol = PPP
+
+admin   Cleartext-Password := "VilleSousSiege2024!"
+        Service-Type = Administrative-User
+
+guest   Cleartext-Password := "guest"
+        Service-Type = Login-User
